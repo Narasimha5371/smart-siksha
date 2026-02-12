@@ -1,3 +1,5 @@
+This project just has the fontend app with website but it does not have any database to teach yet. I will add another repository with the name smart-siksha2 where it is fully functional.
+
 # Smart Sikhsha Backend
 
 A Node.js backend for Smart Sikhsha login and signup system with MongoDB and email verification.
