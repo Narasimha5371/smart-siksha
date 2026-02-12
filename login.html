@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Smart Sikhsha | Login</title>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #121212;
+        color: white;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .card {
+        background-color: #222;
+        padding: 40px;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 0 25px rgba(14, 165, 233, 0.4);
+        border: 1px solid #0ea5e9;
+      }
+
+      h1 {
+        text-align: center;
+        color: #caf0f8;
+      }
+
+      p {
+        text-align: center;
+        color: #88ccee;
+        margin-bottom: 25px;
+      }
+
+      input {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 18px;
+        background: transparent;
+        border: 1px solid #0ea5e9;
+        border-radius: 6px;
+        color: white;
+        font-size: 16px;
+      }
+
+      button {
+        width: 100%;
+        padding: 12px;
+        background-color: #0ea5e9;
+        border: none;
+        color: white;
+        font-size: 18px;
+        font-weight: bold;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #075985;
+      }
+
+      .extra {
+        text-align: center;
+        margin-top: 15px;
+        color: #88ccee;
+      }
+
+      .extra a {
+        color: #0ea5e9;
+        text-decoration: none;
+        font-weight: bold;
+      }
+
+      .error {
+        color: #ff6b6b;
+        text-align: center;
+        margin-top: 10px;
+        display: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="card">
+      <h1>Smart Sikhsha</h1>
+      <p>Login to continue 🚀</p>
+
+      <input type="text" id="username" placeholder="Username" />
+      <input type="password" id="password" placeholder="Password" />
+
+      <button onclick="login()">Login</button>
+
+      <div class="error" id="errorMsg">Invalid credentials</div>
+
+      <div class="extra">
+        New here?
+        <a href="signup.html">Create an account</a>
+      </div>
+    </div>
+
+    <script>
+      function login() {
+        const username = document.getElementById("username").value.trim();
+        const password = document.getElementById("password").value;
+        const errorMsg = document.getElementById("errorMsg");
+
+        const savedUser = JSON.parse(localStorage.getItem("user"));
+
+        if (
+          savedUser &&
+          username === savedUser.username &&
+          password === savedUser.password
+        ) {
+          localStorage.setItem("loggedIn", "true");
+          window.location.href = "home.html";
+        } else {
+          errorMsg.style.display = "block";
+        }
+      }
+    </script>
+  </body>
+</html>

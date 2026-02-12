@@ -1,0 +1,831 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Smart Sikhsha</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 20px;
+        color: white;
+        background-color: #121212;
+      }
+      header {
+        text-align: center;
+        margin-bottom: 40px;
+      }
+      header h1 {
+        margin-bottom: 10px;
+        color: #caf0f8;
+      }
+      nav {
+        display: flex;
+        justify-content: space-around;
+        gap: 20px;
+        flex-wrap: wrap;
+      }
+      .card {
+        border: 1px solid #555;
+        padding: 20px;
+        border-radius: 8px;
+        width: 220px;
+        text-align: center;
+        box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.6);
+        background-color: #222;
+        cursor: pointer;
+        transition: box-shadow 0.3s ease;
+      }
+      .card:hover {
+        box-shadow: 4px 4px 16px #0ea5e9;
+      }
+      button {
+        margin-top: 15px;
+        background-color: #0ea5e9;
+        border: none;
+        color: white;
+        font-weight: bold;
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #075985;
+      }
+
+
+
+      /* Chatbot UI Styling */
+      #chatbotIcon {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 56px;
+        height: 56px;
+        background-color: #0ea5e9;
+        border-radius: 50%;
+        box-shadow: 0 0 15px #0ea5e9;
+        cursor: pointer;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.3s ease;
+      }
+      #chatbotIcon svg { fill: white; width: 28px; height: 28px; }
+
+      #chatModal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(18, 18, 18, 0.95);
+        color: #0ea5e9;
+        font-family: Arial, sans-serif;
+        z-index: 101;
+        flex-direction: column;
+      }
+      #chatModal.active { display: flex; }
+      #chatModalHeader {
+        height: 56px;
+        background: #0ea5e9;
+        color: white;
+        font-weight: bold;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        justify-content: space-between;
+      }
+      #chatModalHeader button { background: transparent; border: none; color: white; font-size: 24px; cursor: pointer; margin: 0; }
+      #chatModalBody { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; }
+      
+      .message { margin-bottom: 12px; padding: 10px 14px; border-radius: 18px; max-width: 80%; word-wrap: break-word; }
+      .userMessage { background-color: #0ea5e9; color: white; align-self: flex-end; }
+      .botMessage { background-color: #222; border: 1px solid #0ea5e9; color: #0ea5e9; align-self: flex-start; white-space: pre-wrap; line-height: 1.5; }
+      .botMessage ol, .botMessage ul { margin: 10px 0; padding-left: 20px; }
+      .botMessage li { margin: 5px 0; }
+
+      /* Chat Input Bar (Pill Style) */
+      #chatModalInput { display: flex; gap: 10px; padding: 10px 16px; border-top: 1px solid #0ea5e9; align-items: center; }
+      .chat-pill {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #2a2a2a;
+        border-radius: 999px;
+        padding: 5px 14px;
+        border: 1px solid #0ea5e9;
+      }
+      .chat-pill input { flex: 1; background: transparent; border: none; color: white; font-size: 16px; padding: 10px 0; }
+      .chat-pill input:focus { outline: none; }
+      .chat-pill button { background: transparent; border: none; color: #0ea5e9; font-size: 20px; cursor: pointer; margin: 0; padding: 5px; }
+      
+      #chatModalSendBtn {
+        background: #0ea5e9;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 30px;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+
+      /* Radar Chart Container */
+      #graphContainer {
+        position: fixed;
+        bottom: 100px; /* Above chatbot icon */
+        right: 20px;
+        width: 320px;
+        height: 340px;
+        background: rgba(18, 18, 18, 0.95);
+        border: 1px solid #0ea5e9;
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+        z-index: 90;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      #graphTitle {
+        font-weight: bold;
+        color: #0ea5e9;
+        margin-bottom: 10px;
+        font-size: 16px;
+      }
+      #masteryChart {
+        width: 100%;
+        height: 100%;
+      }
+      .subject-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+      }
+      .subject-card {
+        background: #222;
+        border: 1px solid #0ea5e9;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: transform 0.2s, background 0.2s;
+      }
+      .subject-card:hover {
+        transform: translateY(-5px);
+        background: #0ea5e9;
+        color: #fff;
+      }
+      .quiz-option {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        background: #333;
+        border: 1px solid #555;
+        border-radius: 5px;
+        color: white;
+        text-align: left;
+        cursor: pointer;
+      }
+      .quiz-option:hover {
+        background: #444;
+      }
+      .quiz-option.correct {
+        background: #28a745;
+        border-color: #28a745;
+      }
+      .quiz-option.incorrect {
+        background: #dc3545;
+        border-color: #dc3545;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Smart Sikhsha</h1>
+      <p>Your Personalized Learning Companion</p>
+      <select id="languageSelect" onchange="changeLanguage()" style="padding: 8px; border-radius: 5px; margin-top: 10px;">
+        <option value="en">English</option>
+        <option value="hi">Hindi</option>
+        <option value="te">Telugu</option>
+        <option value="kn">Kannada</option>
+        <option value="ta">Tamil</option>
+      </select>
+    </header>
+
+    <main id="app-content">
+      <section id="home-section">
+
+    <nav>
+      <div class="card" onclick="showSection('lessons')">
+        <h2>Lessons</h2>
+        <p>Explore personalized lessons tailored for you.</p>
+        <button>Go to Lessons</button>
+      </div>
+
+      <div class="card" onclick="showSection('quizzes')">
+        <h2>Quizzes</h2>
+        <p>Test your knowledge with adaptive quizzes.</p>
+        <button>Take a Quiz</button>
+      </div>
+
+      <div class="card" onclick="showSection('progress')">
+        <h2>Progress</h2>
+        <p>Track your learning journey.</p>
+        <button>View Progress</button>
+      </div>
+    </nav>
+
+
+
+    <div id="chatbotIcon" role="button" title="Open AI Tutor Chatbot">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 3C7 3 3 6.58 3 11c0 1.81.92 3.5 2.51 4.75L5 21l5.24-2.88c.54.15 1.11.23 1.76.23 5 0 9-3.58 9-8s-4-8-9-8z" />
+      </svg>
+    </div>
+
+    <!-- Chart.js for Radar Chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+      </section>
+
+      <div id="graphContainer" role="region">
+        <div id="graphTitle">Subject Mastery</div>
+        <canvas id="masteryChart"></canvas>
+      </div>
+
+      <section id="lessons-section" style="display:none;">
+        <button onclick="showSection('home')" style="margin-bottom: 20px;">← Back to Home</button>
+        <h2>Select a Subject</h2>
+        <div class="subject-grid">
+          <div class="subject-card" onclick="showChapters('Math')">Math</div>
+          <div class="subject-card" onclick="showChapters('Physics')">Physics</div>
+          <div class="subject-card" onclick="showChapters('Chemistry')">Chemistry</div>
+          <div class="subject-card" onclick="showChapters('Biology')">Biology</div>
+          <div class="subject-card" onclick="showChapters('History')">History</div>
+          <div class="subject-card" onclick="showChapters('Geography')">Geography</div>
+          <div class="subject-card" onclick="showChapters('English')">English</div>
+          <div class="subject-card" onclick="showChapters('Computer Science')">Computer Science</div>
+        </div>
+      </section>
+
+      <section id="chapters-section" style="display:none;">
+        <button onclick="showSection('lessons')" style="margin-bottom: 20px;">← Back to Subjects</button>
+        <h2 id="chaptersTitle">Select a Chapter</h2>
+        <div class="subject-grid" id="chaptersGrid">
+          <!-- Chapters injected via JS -->
+          Loading chapters...
+        </div>
+      </section>
+
+      <section id="textbook-section" style="display:none;">
+        <button onclick="showSection('lesson-detail')" style="margin-bottom: 20px;">← Back to Explanation</button>
+        <h2 id="textbookTitle">Textbook: Topic Name</h2>
+        <div style="background: white; color: black; padding: 40px; border-radius: 8px; min-height: 400px; text-align: center;">
+            <h3>Textbook Page 1</h3>
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+            <div style="margin: 20px; border: 1px dashed #ccc; padding: 20px;">
+                [Diagram Placeholder]
+            </div>
+            <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+        </div>
+      </section>
+
+      <section id="lesson-detail-section" style="display:none;">
+        <button onclick="showSection('chapters')" style="margin-bottom: 20px;">← Back to Chapters</button>
+        <h2 id="lessonTitle">Chapter Name</h2>
+        <div id="lessonContent" style="background: #222; padding: 20px; border-radius: 8px; margin-bottom: 20px; min-height: 100px;">
+          Loading explanation...
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button id="viewTextbookBtn" onclick="viewTextbook()" style="display:none; padding: 10px 20px; font-size: 16px; background-color: #666;">View Textbook Pages</button>
+            <button id="startQuizBtn" onclick="startQuiz()" style="display:none; padding: 10px 20px; font-size: 16px;">Take Chapter Quiz</button>
+        </div>
+      </section>
+
+      <section id="quiz-detail-section" style="display:none;">
+        <button onclick="showSection('lessons')" style="margin-bottom: 20px;">← Quit Quiz</button>
+        <h2 id="quizTitle">Quiz</h2>
+        <div id="quizContainer">
+            <div id="questionText" style="font-size: 18px; margin-bottom: 15px;">Question goes here...</div>
+            <div id="optionsContainer">
+                <!-- Options injected here -->
+            </div>
+            <div id="quizFeedback" style="margin-top: 15px; font-weight: bold;"></div>
+            <button id="nextQuestionBtn" onclick="nextQuestion()" style="display:none; margin-top: 20px;">Next Question</button>
+        </div>
+        <div id="quizResult" style="display:none; text-align: center;">
+            <h3>Quiz Completed!</h3>
+            <p id="finalScore">Score: 0/0</p>
+            <button onclick="showSection('lessons')">Back to Lessons</button>
+        </div>
+      </section>
+
+      <section id="quizzes-section" style="display:none;">
+        <button onclick="showSection('home')" style="margin-bottom: 20px;">← Back to Home</button>
+        <h2>Quizzes</h2>
+        <p>No active quizzes. Ask the AI Tutor to generate one!</p>
+      </section>
+
+      <section id="progress-section" style="display:none;">
+        <button onclick="showSection('home')" style="margin-bottom: 20px;">← Back to Home</button>
+        <h2>Detailed Progress</h2>
+        <p>You are making checked progress in Math and Science.</p>
+      </section>
+    </main>
+
+    <!-- Chat Modal -->
+    <div id="chatModal" role="dialog" aria-modal="true">
+      <div id="chatModalHeader">
+        <span>Smart Shiksha AI Tutor</span>
+        <button id="chatModalClose">&times;</button>
+      </div>
+      <div id="chatModalBody">
+        <div class="message botMessage">
+          Hello! I'm your AI tutor. How can I help you learn today?
+        </div>
+      </div>
+      <div id="chatModalInput">
+        <div class="chat-pill">
+          <button id="fileBtn" title="Upload File">+</button>
+          <input type="file" id="fileInput" hidden accept=".pdf,.txt,.doc,.docx" />
+          <input type="text" id="chatModalInputText" placeholder="Ask anything..." />
+          <button id="voiceBtn" title="Voice Input">🎤</button>
+        </div>
+        <button id="chatModalSendBtn">➤</button>
+      </div>
+    </div>
+
+    <footer>
+      <p>&copy; 2023 Smart Sikhsha. All rights reserved.</p>
+    </footer>
+
+    <script>
+      // Initialize Radar Chart
+      document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('masteryChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'radar',
+          data: {
+            labels: ['Math', 'Science', 'History', 'English', 'Computer Science'],
+            datasets: [{
+              label: 'Mastery Level',
+              data: [80, 90, 70, 85, 95],
+              fill: true,
+              backgroundColor: 'rgba(54, 162, 235, 0.2)',
+              borderColor: 'rgb(54, 162, 235)',
+              pointBackgroundColor: 'rgb(54, 162, 235)',
+              pointBorderColor: '#fff',
+              pointHoverBackgroundColor: '#fff',
+              pointHoverBorderColor: 'rgb(54, 162, 235)'
+            }]
+          },
+          options: {
+            elements: {
+              line: {
+                borderWidth: 3
+              }
+            },
+            scales: {
+              r: {
+                angleLines: {
+                  display: true
+                },
+                suggestedMin: 0,
+                suggestedMax: 100,
+                ticks: {
+                  color: 'white' // Make tick labels white
+                },
+                pointLabels: {
+                  color: 'white' // Make point labels white
+                },
+                grid: {
+                  color: '#555' // Make grid lines visible but subtle
+                }
+              }
+            },
+            plugins: {
+              legend: {
+                display: false
+              }
+            },
+            maintainAspectRatio: false
+          }
+        });
+      });
+
+      /* --- CHATBOT INTEGRATED LOGIC --- */
+      const chatbotIcon = document.getElementById("chatbotIcon");
+      const chatModal = document.getElementById("chatModal");
+      const chatModalClose = document.getElementById("chatModalClose");
+      const chatInput = document.getElementById("chatModalInputText");
+      const chatBody = document.getElementById("chatModalBody");
+      const sendBtn = document.getElementById("chatModalSendBtn");
+      /* --- NAVIGATION LOGIC --- */
+      let currentSubject = "";
+      let currentTopic = "";
+      let quizQuestions = [];
+      let currentQuestionIndex = 0;
+      let score = 0;
+
+      function showSection(sectionId) {
+        // Hide all sections
+        ['home', 'lessons', 'chapters', 'textbook', 'quizzes', 'progress', 'lesson-detail', 'quiz-detail'].forEach(id => {
+            const el = document.getElementById(id + '-section');
+            if (el) el.style.display = 'none';
+        });
+
+        // Show requested section
+        const target = document.getElementById(sectionId + '-section');
+        if (target) target.style.display = 'block';
+
+        // Toggle Graph visibility
+        const graph = document.getElementById('graphContainer');
+        if (graph) {
+            graph.style.display = (sectionId === 'home' || sectionId === 'progress') ? 'flex' : 'none';
+        }
+      }
+
+      /* --- LESSONS LOGIC --- */
+      async function showChapters(subject) {
+        currentSubject = subject;
+        document.getElementById('chaptersTitle').textContent = "Select a Chapter in " + subject;
+        document.getElementById('chaptersGrid').innerHTML = "Loading...";
+        showSection('chapters');
+        
+        try {
+            const res = await fetch("http://localhost:8000/topics/" + subject);
+            const data = await res.json();
+            let topics = data.topics;
+            
+            // Fallback if no topics found
+            if (!topics || topics.length === 0) {
+                 const fallbacks = {
+                    "Math": ["Algebra", "Geometry", "Calculus", "Statistics"],
+                    "Physics": ["Mechanics", "Optics", "Thermodynamics", "Electromagnetism"],
+                    "Chemistry": ["Organic", "Inorganic", "Physical"],
+                    "Biology": ["Cell Biology", "Genetics", "Ecology"],
+                    "History": ["Ancient", "Medieval", "Modern", "World War II"],
+                    "Geography": ["Physical", "Human", "Cartography"],
+                    "English": ["Grammar", "Literature", "Writing"],
+                    "Computer Science": ["Algorithms", "Data Structures", "Web Development"]
+                 };
+                 topics = fallbacks[subject] || ["General " + subject];
+            }
+            
+            const grid = document.getElementById('chaptersGrid');
+            grid.innerHTML = "";
+            topics.forEach(topic => {
+                const div = document.createElement('div');
+                div.className = 'subject-card';
+                div.textContent = topic;
+                div.onclick = () => startLesson(topic);
+                grid.appendChild(div);
+            });
+            
+        } catch (e) {
+            console.error(e);
+            document.getElementById('chaptersGrid').innerHTML = "Error loading chapters.";
+        }
+      }
+
+      function startLesson(topic) {
+        currentTopic = topic;
+        document.getElementById('lessonTitle').textContent = topic + " (" + currentSubject + ")";
+        document.getElementById('lessonContent').innerHTML = '🤔 AI Tutor is preparing a lesson on ' + topic + '...';
+        document.getElementById('startQuizBtn').style.display = 'none';
+        document.getElementById('viewTextbookBtn').style.display = 'none';
+        
+        showSection('lesson-detail');
+        
+        // Fetch explanation
+        fetchExplanation(currentSubject + ": " + topic);
+      }
+
+      function viewTextbook() {
+        document.getElementById('textbookTitle').textContent = "Textbook: " + currentTopic;
+        showSection('textbook');
+      }
+
+      async function fetchExplanation(query) {
+        try {
+            const res = await fetch("http://localhost:8000/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: "Explain the core concepts of " + query + " for a high school student. Keep it concise." })
+            });
+            const data = await res.json();
+            
+            let html = data.answer.replace(/\n/g, '<br>');
+            document.getElementById('lessonContent').innerHTML = html;
+            document.getElementById('startQuizBtn').style.display = 'inline-block';
+            document.getElementById('viewTextbookBtn').style.display = 'inline-block';
+            
+            speak(data.answer.substring(0, 200)); 
+        } catch (e) {
+            document.getElementById('lessonContent').innerHTML = '❌ Failed to load lesson. Please try again.';
+            console.error(e);
+        }
+      }
+
+      /* --- QUIZ LOGIC --- */
+      function startQuiz(subject = currentSubject, topic = currentTopic) {
+        if (!subject) subject = "General Knowledge";
+        currentSubject = subject;
+        currentTopic = topic;
+        
+        const title = topic ? `${subject}: ${topic} Quiz` : `${subject} Quiz`;
+        
+        document.getElementById('quizTitle').textContent = title;
+        document.getElementById('quizContainer').style.display = 'block';
+        document.getElementById('quizResult').style.display = 'none';
+        document.getElementById('quizFeedback').textContent = '';
+        
+        showSection('quiz-detail');
+        loadQuiz(subject, topic);
+      }
+
+      async function loadQuiz(subject, topic) {
+         document.getElementById('questionText').textContent = "Generating quiz questions...";
+         document.getElementById('optionsContainer').innerHTML = "";
+         
+         try {
+            const body = { subject: subject, num_questions: 5 };
+            if (topic) body.topic = topic;
+            
+            const res = await fetch("http://localhost:8000/quiz/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            quizQuestions = data.questions;
+            currentQuestionIndex = 0;
+            score = 0;
+            
+            if (quizQuestions.length > 0) {
+                renderQuestion();
+            } else {
+                document.getElementById('questionText').textContent = "No questions generated for this topic. Try another.";
+            }
+         } catch (e) {
+             document.getElementById('questionText').textContent = "Error generating quiz.";
+             console.error(e);
+         }
+      }
+
+      function renderQuestion() {
+        if (currentQuestionIndex >= quizQuestions.length) {
+            showQuizResult();
+            return;
+        }
+        
+        const q = quizQuestions[currentQuestionIndex];
+        document.getElementById('questionText').textContent = (currentQuestionIndex + 1) + ". " + q.question;
+        document.getElementById('quizFeedback').textContent = '';
+        document.getElementById('nextQuestionBtn').style.display = 'none';
+        
+        const container = document.getElementById('optionsContainer');
+        container.innerHTML = '';
+        
+        q.options.forEach((opt, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'quiz-option';
+            btn.textContent = opt;
+            btn.onclick = () => selectOption(idx, btn);
+            container.appendChild(btn);
+        });
+      }
+
+      function selectOption(selectedIndex, btnElement) {
+        // Disable all buttons
+        const opts = document.querySelectorAll('.quiz-option');
+        opts.forEach(b => b.onclick = null);
+        
+        const q = quizQuestions[currentQuestionIndex];
+        // data_processor returns correct_answer_index (0-3) or string? 
+        // Need to check backend/data_processor.py to be sure. 
+        // Typically it's index or string. Let's assume index for now based on main.py snippet.
+        // Wait, main.py says `correct_answer_index`.
+        
+        const correctIndex = q.correct_answer_index; // 0-based
+        
+        if (selectedIndex === correctIndex) {
+            btnElement.classList.add('correct');
+            document.getElementById('quizFeedback').textContent = '✅ Correct!';
+            document.getElementById('quizFeedback').style.color = '#28a745';
+            score++;
+        } else {
+            btnElement.classList.add('incorrect');
+            // Highlight correct one
+            if (opts[correctIndex]) opts[correctIndex].classList.add('correct');
+            
+            document.getElementById('quizFeedback').textContent = '❌ Incorrect. ' + (q.explanation || '');
+            document.getElementById('quizFeedback').style.color = '#dc3545';
+        }
+        
+        document.getElementById('nextQuestionBtn').style.display = 'block';
+      }
+
+      function nextQuestion() {
+        currentQuestionIndex++;
+        renderQuestion();
+      }
+
+      function showQuizResult() {
+        document.getElementById('quizContainer').style.display = 'none';
+        document.getElementById('quizResult').style.display = 'block';
+        document.getElementById('finalScore').textContent = `You scored ${score} out of ${quizQuestions.length}`;
+      }
+
+      function changeLanguage() {
+        const lang = document.getElementById("languageSelect").value;
+        // In a real app, this would update text content or fetch translations
+        alert("Language switched to " + lang + ". Chatbot will respond in this language if configured.");
+      }
+
+      const fileBtn = document.getElementById("fileBtn");
+      const fileInput = document.getElementById("fileInput");
+      const voiceBtn = document.getElementById("voiceBtn");
+
+      // Toggle Modal
+      chatbotIcon.onclick = () => { chatModal.classList.add("active"); chatInput.focus(); };
+      chatModalClose.onclick = () => chatModal.classList.remove("active");
+
+      function escapeHtml(value) {
+        return value
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function appendMessage(text, sender, isLoading = false) {
+        const div = document.createElement("div");
+        div.className = `message ${sender}Message`;
+        if (isLoading) {
+          div.id = "loadingMessage";
+          div.innerHTML = '🤔 Analyzing...';
+        } else if (sender === "bot") {
+          const lines = text.split(/\n+/).filter((line) => line.trim());
+          let html = "";
+          let activeList = null;
+
+          for (const rawLine of lines) {
+            const line = rawLine.trim();
+            const isOrdered = /^\d+\./.test(line);
+            const isUnordered = /^[-•*]/.test(line);
+
+            if (isOrdered || isUnordered) {
+              const listType = isOrdered ? "ol" : "ul";
+              if (activeList !== listType) {
+                if (activeList) html += `</${activeList}>`;
+                html += `<${listType}>`;
+                activeList = listType;
+              }
+              const cleaned = isOrdered
+                ? line.replace(/^\d+\.\s*/, "")
+                : line.replace(/^[-•*]\s*/, "");
+              html += `<li>${escapeHtml(cleaned)}</li>`;
+            } else {
+              if (activeList) {
+                html += `</${activeList}>`;
+                activeList = null;
+              }
+              html += `<div>${escapeHtml(line)}</div>`;
+            }
+          }
+          if (activeList) html += `</${activeList}>`;
+
+          div.innerHTML = html;
+        } else {
+          div.textContent = text;
+        }
+        chatBody.appendChild(div);
+        chatBody.scrollTop = chatBody.scrollHeight;
+        return div;
+      }
+
+      // Global variable for PDF text
+      let currentPDFContext = "";
+
+      /* --- FILE UPLOAD LOGIC --- */
+      fileBtn.onclick = () => fileInput.click();
+      fileInput.onchange = async () => {
+        if (!fileInput.files[0]) return;
+        
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append("file", file);
+        
+        // Show uploading message
+        appendMessage(`📎 Uploading: ${file.name}...`, "user");
+
+        try {
+            const res = await fetch("http://localhost:8000/pdf/upload", {
+                method: "POST",
+                body: formData
+            });
+            
+            if (!res.ok) throw new Error("Upload failed");
+            
+            const data = await res.json();
+            currentPDFContext = data.text;
+            
+            appendMessage(`✅ Processed: ${file.name} (Ready to analyze)`, "user");
+            
+        } catch (e) {
+            appendMessage(`❌ Failed to upload ${file.name}`, "bot");
+            console.error(e);
+        }
+      };
+
+      // Voice Output
+      function speak(text) {
+        if (!window.speechSynthesis) return;
+        const utterance = new SpeechSynthesisUtterance(text);
+        speechSynthesis.speak(utterance);
+      }
+
+      // Fetch from AI Server
+      async function sendMessage() {
+        const userText = chatInput.value.trim();
+        if (!userText) return;
+
+        appendMessage(userText, "user");
+        chatInput.value = "";
+
+        // Show thinking indicator
+        appendMessage("", "bot", true);
+        
+        // Prepare message payload
+        let fullMessage = userText;
+        if (currentPDFContext) {
+            fullMessage = `Context from uploaded PDF:\n${currentPDFContext}\n\nQuestion: ${userText}`;
+        }
+
+        try {
+          const res = await fetch("http://localhost:8000/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: fullMessage }),
+          });
+          if (!res.ok) throw new Error(`Server returned ${res.status}`);
+          const data = await res.json();
+          const botReply = data.answer || "I'm processing your request.";
+          
+          // Remove loading indicator and show response
+          const loadingMsg = document.getElementById("loadingMessage");
+          if (loadingMsg) loadingMsg.remove();
+          
+          appendMessage(botReply, "bot");
+          speak(botReply);
+        } catch {
+          const loadingMsg = document.getElementById("loadingMessage");
+          if (loadingMsg) loadingMsg.remove();
+          appendMessage("AI server not reachable. Please ensure your backend is running on port 8000.", "bot");
+        }
+      }
+
+      sendBtn.onclick = sendMessage;
+      
+      // Allow Enter key to send
+      chatInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          sendMessage();
+        }
+      });
+
+
+      // Voice Recognition logic
+      if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.onresult = (e) => {
+          chatInput.value = e.results[0][0].transcript;
+          sendMessage();
+        };
+        voiceBtn.onclick = () => recognition.start();
+      } else {
+        voiceBtn.style.opacity = "0.5";
+        voiceBtn.title = "Not supported in this browser";
+      }
+
+
+    </script>
+  </body>
+</html>

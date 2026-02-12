@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Smart Sikhsha | Create Account</title>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #121212;
+        color: white;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .card {
+        background-color: #222;
+        padding: 40px;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 420px;
+        box-shadow: 0 0 25px rgba(14, 165, 233, 0.4);
+        border: 1px solid #0ea5e9;
+      }
+
+      h1 {
+        text-align: center;
+        color: #caf0f8;
+      }
+
+      p {
+        text-align: center;
+        color: #88ccee;
+        margin-bottom: 25px;
+      }
+
+      input, select {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 18px;
+        background: transparent;
+        border: 1px solid #0ea5e9;
+        border-radius: 6px;
+        color: white;
+        font-size: 16px;
+      }
+
+      /* Fix for select options visibility in dark theme */
+      select option {
+        background-color: #222;
+        color: white;
+      }
+
+      button {
+        width: 100%;
+        padding: 12px;
+        background-color: #0ea5e9;
+        border: none;
+        color: white;
+        font-size: 18px;
+        font-weight: bold;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-bottom: 10px;
+      }
+
+      button:hover {
+        background-color: #075985;
+      }
+
+      .extra {
+        text-align: center;
+        margin-top: 15px;
+        color: #88ccee;
+      }
+
+      .extra a {
+        color: #0ea5e9;
+        text-decoration: none;
+        font-weight: bold;
+      }
+
+      #password-feedback {
+        margin-bottom: 18px;
+        font-size: 14px;
+      }
+
+      #password-feedback ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      #password-feedback li {
+        margin-bottom: 5px;
+        color: #ff6b6b; /* Red for invalid */
+      }
+
+      #password-feedback li.valid {
+        color: #51cf66; /* Green for valid */
+      }
+
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="card">
+      <h1>New Here?</h1>
+      <p>Create your account 🚀</p>
+
+      <input type="text" id="username" placeholder="Username" />
+      <input type="email" id="email" placeholder="Gmail Address (e.g., example@gmail.com)" />
+      <input type="password" id="password" placeholder="Password" oninput="checkPassword()" />
+      <div id="password-feedback">
+        <ul>
+          <li id="length">At least 8 characters</li>
+          <li id="upper">At least one uppercase letter</li>
+          <li id="number">At least one number</li>
+        </ul>
+      </div>
+      <input type="password" id="confirm" placeholder="Confirm Password" />
+
+      <select id="language" aria-label="Select Preferred Language">
+        <option value="">Select Preferred Language</option>
+        <option value="Hindi">Hindi</option>
+        <option value="Telugu">Telugu</option>
+        <option value="Kannada">Kannada</option>
+        <option value="Tamil">Tamil</option>
+      </select>
+
+      <select id="class" aria-label="Select Preferred Class">
+        <option value="">Select Preferred Class</option>
+        <option value="8th">8th</option>
+        <option value="9th">9th</option>
+        <option value="10th">10th</option>
+        <option value="11th">11th</option>
+        <option value="12th">12th</option>
+      </select>
+
+      <button onclick="sendCode()">Send Verification Code</button>
+      <input type="text" id="verification-code" placeholder="Enter Verification Code" class="hidden" />
+      <button onclick="verifyAndSignup()" class="hidden" id="verify-btn">Verify & Sign Up</button>
+
+      <div class="extra">
+        Already have an account?
+        <a href="login.html">Login</a>
+      </div>
+    </div>
+
+    <script>
+      let verificationCode = null;
+
+      function checkPassword() {
+        const password = document.getElementById("password").value;
+        const lengthLi = document.getElementById("length");
+        const upperLi = document.getElementById("upper");
+        const numberLi = document.getElementById("number");
+
+        // Check length
+        if (password.length >= 8) {
+          lengthLi.classList.add("valid");
+        } else {
+          lengthLi.classList.remove("valid");
+        }
+
+        // Check uppercase
+        if (/[A-Z]/.test(password)) {
+          upperLi.classList.add("valid");
+        } else {
+          upperLi.classList.remove("valid");
+        }
+
+        // Check number
+        if (/\d/.test(password)) {
+          numberLi.classList.add("valid");
+        } else {
+          numberLi.classList.remove("valid");
+        }
+      }
+
+      function isPasswordValid(password) {
+        return password.length >= 8 && /[A-Z]/.test(password) && /\d/.test(password);
+      }
+
+      async function sendCode() {
+        const username = document.getElementById("username").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+        const confirm = document.getElementById("confirm").value;
+        const language = document.getElementById("language").value;
+        const classLevel = document.getElementById("class").value;
+
+        if (!username || !email || !password || !confirm || !language || !classLevel) {
+          alert("Please fill all fields and make selections");
+          return;
+        }
+
+        if (!email.endsWith("@gmail.com")) {
+          alert("Please enter a valid Gmail address");
+          return;
+        }
+
+        if (!isPasswordValid(password)) {
+          alert("Password does not meet the requirements: at least 8 characters, one uppercase letter, and one number.");
+          return;
+        }
+
+        if (password !== confirm) {
+          alert("Passwords do not match");
+          return;
+        }
+
+        try {
+          const response = await fetch('http://localhost:5000/api/signup', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username, email, password, language, class: classLevel }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            alert(data.message);
+            // Show verification input and button
+            document.getElementById("verification-code").classList.remove("hidden");
+            document.getElementById("verify-btn").classList.remove("hidden");
+          } else {
+            alert(data.message);
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          alert('An error occurred. Please try again.');
+        }
+      }
+
+      async function verifyAndSignup() {
+        const email = document.getElementById("email").value.trim();
+        const enteredCode = document.getElementById("verification-code").value.trim();
+
+        try {
+          const response = await fetch('http://localhost:5000/api/verify', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, verificationCode: enteredCode }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            alert(data.message);
+            window.location.href = "login.html";
+          } else {
+            alert(data.message);
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          alert('An error occurred. Please try again.');
+        }
+      }
+    </script>
+  </body>
+</html>
