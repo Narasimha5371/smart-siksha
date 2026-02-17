@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app.models.all_models import User, UserRole, StudentProgress
@@ -31,13 +32,13 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
     ).count()
 
     # Tests Completed & Avg Score
-    all_progress = db.query(StudentProgress).all()
-    tests_completed = len(all_progress)
-    
-    avg_class_score = 0
-    if all_progress:
-        total_score = sum(p.score for p in all_progress)
-        avg_class_score = int(total_score / len(all_progress))
+    progress_stats = db.query(
+        func.count(StudentProgress.id),
+        func.avg(StudentProgress.score)
+    ).first()
+
+    tests_completed = progress_stats[0]
+    avg_class_score = int(progress_stats[1]) if progress_stats[1] is not None else 0
 
     return DashboardStats(
         avg_class_score=avg_class_score,
