@@ -38,7 +38,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
 
     final apiService = context.read<ApiService>();
     final topics = await apiService.getTopics(subject);
-    
+
     setState(() {
       _topics = topics;
       _isLoading = false;

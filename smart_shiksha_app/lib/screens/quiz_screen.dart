@@ -28,7 +28,7 @@ class _QuizScreenState extends State<QuizScreen> {
   Future<void> _loadQuiz() async {
     final apiService = context.read<ApiService>();
     final questions = await apiService.generateQuiz(numQuestions: 10);
-    
+
     setState(() {
       _questions = questions;
       _isLoading = false;

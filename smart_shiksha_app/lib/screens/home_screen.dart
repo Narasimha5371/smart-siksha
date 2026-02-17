@@ -9,7 +9,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String selectedLanguage = 'en';
-  
+
   final Map<String, String> languages = {
     'en': 'English',
     'hi': 'हिंदी',
@@ -72,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 60),
-              
+
               // Navigation Cards
               Wrap(
                 spacing: 20,

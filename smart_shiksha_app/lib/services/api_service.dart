@@ -1,13 +1,17 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/question.dart';
 
 class ApiService {
-  // Change this to your backend URL
-  // For local development: http://localhost:8000
-  // For production: https://your-backend-url.com
-  static const String baseUrl = 'http://localhost:8000';
-  
+  final String baseUrl;
+
+  ApiService({String? baseUrl}) : baseUrl = baseUrl ?? 'http://localhost:8000' {
+    if (kReleaseMode && !this.baseUrl.startsWith('https://')) {
+      throw Exception('Insecure API URL in release mode: ${this.baseUrl}');
+    }
+  }
+
   // Chat with AI tutor
   Future<String> chat(String message, String language) async {
     try {
@@ -19,7 +23,7 @@ class ApiService {
           'language': language,
         }),
       );
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return data['answer'] ?? 'No response';
@@ -30,12 +34,12 @@ class ApiService {
       return 'Failed to connect to server. Please check your connection.';
     }
   }
-  
+
   // Get list of subjects
   Future<List<String>> getSubjects() async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/subjects'));
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return List<String>.from(data['subjects'] ?? []);
@@ -45,14 +49,14 @@ class ApiService {
       return [];
     }
   }
-  
+
   // Get topics for a subject
   Future<List<String>> getTopics(String subject) async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/topics/$subject'),
       );
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return List<String>.from(data['topics'] ?? []);
@@ -62,7 +66,7 @@ class ApiService {
       return [];
     }
   }
-  
+
   // Generate quiz
   Future<List<Question>> generateQuiz({
     String? subject,
@@ -77,7 +81,7 @@ class ApiService {
           'num_questions': numQuestions,
         }),
       );
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final questions = data['questions'] as List;
@@ -88,7 +92,7 @@ class ApiService {
       return [];
     }
   }
-  
+
   // Translate text
   Future<String> translate(
     String text,
@@ -105,7 +109,7 @@ class ApiService {
           'target_lang': targetLang,
         }),
       );
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return data['translated_text'] ?? text;
@@ -115,12 +119,12 @@ class ApiService {
       return text;
     }
   }
-  
+
   // Get supported languages
   Future<Map<String, String>> getLanguages() async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/languages'));
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return Map<String, String>.from(data);
@@ -130,14 +134,16 @@ class ApiService {
       return {'en': 'English'};
     }
   }
-  
+
   // Health check
   Future<bool> checkHealth() async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/health'),
-      ).timeout(const Duration(seconds: 5));
-      
+      final response = await http
+          .get(
+            Uri.parse('$baseUrl/health'),
+          )
+          .timeout(const Duration(seconds: 5));
+
       return response.statusCode == 200;
     } catch (e) {
       return false;
