@@ -7,7 +7,8 @@ class Settings(BaseSettings):
     API_VERSION: str = "1.0.0"
     API_HOST: str = "0.0.0.0"
     API_PORT: int = 8000
-    
+    API_AUTH_TOKEN: str  # Security token for API access (Required)
+
     # MongoDB Configuration
     MONGODB_URI: str = "mongodb://localhost:27017"
     MONGODB_DB: str = "smart_shiksha"

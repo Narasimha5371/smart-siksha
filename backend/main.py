@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, File, UploadFile
+from fastapi import FastAPI, HTTPException, File, UploadFile, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List
@@ -6,6 +6,7 @@ from config import settings
 from ai_tutor import ai_tutor
 from translator import translation_service
 from data_processor import data_processor
+from auth import get_api_key
 import uvicorn
 import pdfplumber
 import io
@@ -83,7 +84,7 @@ async def health_check():
     }
 
 # Chat endpoint (main AI tutor interface)
-@app.post("/chat", response_model=ChatResponse)
+@app.post("/chat", response_model=ChatResponse, dependencies=[Depends(get_api_key)])
 async def chat(request: ChatRequest):
     """
     Main chat endpoint with AI tutor
@@ -130,7 +131,7 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 # Translation endpoint
-@app.post("/translate", response_model=TranslateResponse)
+@app.post("/translate", response_model=TranslateResponse, dependencies=[Depends(get_api_key)])
 async def translate(request: TranslateRequest):
     """
     Translate text between languages using LibreTranslate
@@ -178,7 +179,7 @@ async def get_topics(subject: str):
     }
 
 # Generate quiz
-@app.post("/quiz/generate", response_model=QuizResponse)
+@app.post("/quiz/generate", response_model=QuizResponse, dependencies=[Depends(get_api_key)])
 async def generate_quiz(request: QuizRequest):
     """
     Generate a quiz with random questions
@@ -216,7 +217,7 @@ class PDFResponse(BaseModel):
     filename: str
 
 # PDF Upload Endpoint
-@app.post("/pdf/upload", response_model=PDFResponse)
+@app.post("/pdf/upload", response_model=PDFResponse, dependencies=[Depends(get_api_key)])
 async def upload_pdf(file: UploadFile = File(...)):
     """
     Upload and parse PDF file to extract text
