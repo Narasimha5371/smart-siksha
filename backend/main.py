@@ -225,7 +225,28 @@ async def upload_pdf(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="File must be a PDF")
     
     try:
-        content = await file.read()
+        # Check Content-Length header first
+        content_length = file.headers.get("content-length")
+        if content_length:
+            try:
+                if int(content_length) > settings.MAX_UPLOAD_SIZE:
+                    raise HTTPException(status_code=413, detail="File too large")
+            except ValueError:
+                pass  # Ignore invalid content-length header
+
+        content = bytearray()
+        size = 0
+        CHUNK_SIZE = 1024 * 1024  # 1MB chunk
+
+        while True:
+            chunk = await file.read(CHUNK_SIZE)
+            if not chunk:
+                break
+            size += len(chunk)
+            if size > settings.MAX_UPLOAD_SIZE:
+                raise HTTPException(status_code=413, detail="File too large")
+            content.extend(chunk)
+
         text = ""
         with pdfplumber.open(io.BytesIO(content)) as pdf:
             for page in pdf.pages:
@@ -234,6 +255,8 @@ async def upload_pdf(file: UploadFile = File(...)):
                     text += extracted + "\n"
         
         return PDFResponse(text=text, filename=file.filename)
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"PDF processing error: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to process PDF: {str(e)}")
