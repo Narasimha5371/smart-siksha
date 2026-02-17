@@ -8,6 +8,9 @@ import re
 from groq import Groq
 import ollama
 
+# Pre-compile regex for question patterns
+QUESTION_PATTERN_REGEX = re.compile(r'\b(?:what|how|why|when|where|explain|describe|define|solve)\b')
+
 class AITutor:
     """
     AI Tutor with RAG (Retrieval Augmented Generation) and education-only guardrails
@@ -130,11 +133,7 @@ class AITutor:
             return True
         
         # Check for question patterns
-        question_patterns = [
-            r'\bwhat\b', r'\bhow\b', r'\bwhy\b', r'\bwhen\b', r'\bwhere\b',
-            r'\bexplain\b', r'\bdescribe\b', r'\bdefine\b', r'\bsolve\b'
-        ]
-        if any(re.search(pattern, query_lower) for pattern in question_patterns):
+        if QUESTION_PATTERN_REGEX.search(query_lower):
             # Likely educational if it's a question
             return True
         
