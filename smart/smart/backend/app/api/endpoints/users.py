@@ -1,10 +1,9 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-from app.core.database import SessionLocal
-from app.models.all_models import User, UserRole, StudentProgress
 from typing import List, Optional
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session, selectinload
 from pydantic import BaseModel
-from datetime import datetime
+from app.core.database import SessionLocal
+from app.models.all_models import User, UserRole
 
 router = APIRouter()
 
@@ -24,18 +23,18 @@ class UserListResponse(BaseModel):
 
 @router.get("/", response_model=List[UserListResponse])
 def get_users(role: UserRole = UserRole.STUDENT, db: Session = Depends(get_db)):
-    users = db.query(User).filter(User.role == role).all()
-    
+    users = db.query(User).options(selectinload(User.progress)).filter(User.role == role).all()
+
     response = []
     for user in users:
         # Calculate stats on the fly (for MVP)
-        progress = db.query(StudentProgress).filter(StudentProgress.student_id == user.id).all()
-        
+        progress = user.progress
+
         avg_score = 0
         if progress:
             total_score = sum(p.score for p in progress)
             avg_score = int(total_score / len(progress))
-        
+
         last_active = "Never"
         if user.last_synced_at:
             # Simple formatting
@@ -48,5 +47,5 @@ def get_users(role: UserRole = UserRole.STUDENT, db: Session = Depends(get_db)):
             last_active=last_active,
             avg_score=avg_score
         ))
-    
+
     return response
