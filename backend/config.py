@@ -18,7 +18,6 @@ class Settings(BaseSettings):
     
     # AI Model Configuration
     OPENAI_API_KEY: str = ""  # Optional, leave empty to use local model
-    USE_LOCAL_MODEL: bool = True  # Set to False to use OpenAI
     LOCAL_MODEL_NAME: str = "sentence-transformers/all-MiniLM-L6-v2"
     
     # Groq API Configuration
