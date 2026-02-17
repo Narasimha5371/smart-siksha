@@ -25,6 +25,7 @@ class AITutor:
         
         # Initialize Groq client
         self.groq_client = None
+        self.ollama_client = None
         if settings.GROQ_API_KEY and not settings.USE_OLLAMA:
             try:
                 self.groq_client = Groq(api_key=settings.GROQ_API_KEY)
@@ -34,6 +35,7 @@ class AITutor:
         
         if settings.USE_OLLAMA:
             print(f"Using Ollama with model: {settings.OLLAMA_MODEL}")
+            self.ollama_client = ollama.AsyncClient(host=settings.OLLAMA_BASE_URL)
         
         self.collection = None
         self.is_initialized = False
@@ -276,7 +278,10 @@ Please provide a comprehensive, educational answer to the student's question. Us
             
             if settings.USE_OLLAMA:
                 print(f"DEBUG: Calling Ollama with model {settings.OLLAMA_MODEL}")
-                response = ollama.chat(model=settings.OLLAMA_MODEL, messages=[
+                if self.ollama_client is None:
+                     self.ollama_client = ollama.AsyncClient(host=settings.OLLAMA_BASE_URL)
+
+                response = await self.ollama_client.chat(model=settings.OLLAMA_MODEL, messages=[
                     {'role': 'system', 'content': system_prompt},
                     {'role': 'user', 'content': user_prompt},
                 ])
