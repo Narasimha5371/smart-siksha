@@ -49,13 +49,8 @@ for subject, topics in subjects.items():
             q_template, ans, wrong, correct_idx = random.choice(templates)
             q_text = q_template.format(topic=topic)
             
-            opts = {
-                "A": wrong[0], "B": wrong[1], "C": wrong[2], "D": wrong[3]
-            }
-            # Insert correct answer at correct_idx
-            # Wait, currently wrong list has correct answer at index 0?
-            # Let's simple shuffle options
-            all_opts = [ans] + wrong[1:] # ans is correct, wrong[1:] are wrong
+            # ans is correct, wrong[1:] are wrong
+            all_opts = [ans] + wrong[1:]
             random.shuffle(all_opts)
             
             final_opts = {"A": all_opts[0], "B": all_opts[1], "C": all_opts[2], "D": all_opts[3]}
