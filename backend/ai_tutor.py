@@ -126,8 +126,12 @@ class AITutor:
         
         # Check for educational keywords
         education_keywords = settings.EDUCATION_KEYWORDS
-        if any(keyword in query_lower for keyword in education_keywords):
-            return True
+        # Use word boundaries to avoid false positives (e.g. "latest" matching "test")
+        if education_keywords:
+            # Use lookarounds instead of \b to handle keywords with symbols (e.g. C++)
+            education_pattern = r'(?<!\w)(' + '|'.join(map(re.escape, education_keywords)) + r')(?!\w)'
+            if re.search(education_pattern, query_lower):
+                return True
         
         # Check for question patterns
         question_patterns = [
@@ -145,8 +149,10 @@ class AITutor:
             'politics', 'election', 'party', 'minister',
             'relationship', 'dating', 'love'
         ]
-        if any(keyword in query_lower for keyword in restricted_keywords):
-            return False
+        if restricted_keywords:
+            restricted_pattern = r'(?<!\w)(' + '|'.join(map(re.escape, restricted_keywords)) + r')(?!\w)'
+            if re.search(restricted_pattern, query_lower):
+                return False
         
         # Default to True for ambiguous cases
         return True
