@@ -9,6 +9,7 @@ from data_processor import data_processor
 import uvicorn
 import pdfplumber
 import io
+import asyncio
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -215,6 +216,16 @@ class PDFResponse(BaseModel):
     text: str
     filename: str
 
+def process_pdf(content: bytes) -> str:
+    """Helper function to process PDF in a separate thread"""
+    text = ""
+    with pdfplumber.open(io.BytesIO(content)) as pdf:
+        for page in pdf.pages:
+            extracted = page.extract_text()
+            if extracted:
+                text += extracted + "\n"
+    return text
+
 # PDF Upload Endpoint
 @app.post("/pdf/upload", response_model=PDFResponse)
 async def upload_pdf(file: UploadFile = File(...)):
@@ -226,12 +237,10 @@ async def upload_pdf(file: UploadFile = File(...)):
     
     try:
         content = await file.read()
-        text = ""
-        with pdfplumber.open(io.BytesIO(content)) as pdf:
-            for page in pdf.pages:
-                extracted = page.extract_text()
-                if extracted:
-                    text += extracted + "\n"
+
+        # Run CPU-bound task in a separate thread to avoid blocking event loop
+        loop = asyncio.get_running_loop()
+        text = await loop.run_in_executor(None, process_pdf, content)
         
         return PDFResponse(text=text, filename=file.filename)
     except Exception as e:
