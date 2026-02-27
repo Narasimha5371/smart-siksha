@@ -54,7 +54,6 @@ class AITutor:
             return
         
         # Get or create collection
-        # Get or create collection
         try:
             self.collection = self.chroma_client.get_or_create_collection(
                 name=settings.CHROMA_COLLECTION_NAME,
@@ -104,7 +103,6 @@ class AITutor:
             # Generate embeddings
             embeddings = self.embedding_model.encode(documents).tolist()
             
-            # Add to collection
             # Add to collection (using upsert to handle updates/duplicates)
             self.collection.upsert(
                 embeddings=embeddings,
