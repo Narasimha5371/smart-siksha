@@ -1,6 +1,5 @@
 from typing import List, Dict, Any, Optional
 import chromadb
-from chromadb.config import Settings as ChromaSettings
 from sentence_transformers import SentenceTransformer
 from config import settings
 from data_processor import data_processor
