@@ -1,4 +1,6 @@
 from typing import List, Dict, Any, Optional
+import asyncio
+import functools
 import chromadb
 from chromadb.config import Settings as ChromaSettings
 from sentence_transformers import SentenceTransformer
@@ -187,10 +189,15 @@ What subject would you like to learn about today?"""
             where["subject"] = subject_filter
         
         # Search in ChromaDB
-        results = self.collection.query(
-            query_embeddings=[query_embedding],
-            n_results=n_results,
-            where=where if where else None
+        loop = asyncio.get_running_loop()
+        results = await loop.run_in_executor(
+            None,
+            functools.partial(
+                self.collection.query,
+                query_embeddings=[query_embedding],
+                n_results=n_results,
+                where=where if where else None
+            )
         )
         
         # Format results
