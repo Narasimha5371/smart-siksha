@@ -8,10 +8,14 @@ class ApiService {
   // For production: https://your-backend-url.com
   static const String baseUrl = 'http://localhost:8000';
   
+  final http.Client _client;
+
+  ApiService({http.Client? client}) : _client = client ?? http.Client();
+
   // Chat with AI tutor
   Future<String> chat(String message, String language) async {
     try {
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse('$baseUrl/chat'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
@@ -34,7 +38,7 @@ class ApiService {
   // Get list of subjects
   Future<List<String>> getSubjects() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/subjects'));
+      final response = await _client.get(Uri.parse('$baseUrl/subjects'));
       
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -49,7 +53,7 @@ class ApiService {
   // Get topics for a subject
   Future<List<String>> getTopics(String subject) async {
     try {
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse('$baseUrl/topics/$subject'),
       );
       
@@ -69,7 +73,7 @@ class ApiService {
     int numQuestions = 10,
   }) async {
     try {
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse('$baseUrl/quiz/generate'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
@@ -96,7 +100,7 @@ class ApiService {
     String targetLang,
   ) async {
     try {
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse('$baseUrl/translate'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
@@ -119,7 +123,7 @@ class ApiService {
   // Get supported languages
   Future<Map<String, String>> getLanguages() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/languages'));
+      final response = await _client.get(Uri.parse('$baseUrl/languages'));
       
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -134,7 +138,7 @@ class ApiService {
   // Health check
   Future<bool> checkHealth() async {
     try {
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse('$baseUrl/health'),
       ).timeout(const Duration(seconds: 5));
       
