@@ -237,6 +237,24 @@ What subject would you like to learn about today?"""
         similar_items = await self.search_similar(query, n_results=5, subject_filter=subject_filter)
         
         # Build context from retrieved items
+        context = self._build_context_string(similar_items)
+
+        # Use Ollama or Groq to generate intelligent response
+        try:
+            answer = self._generate_llm_response(query, context)
+            if answer:
+                return self._create_success_response(answer, similar_items)
+
+        except Exception as e:
+            print(f"ERROR: AI Generation failed: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            pass
+
+        return self._create_fallback_response(similar_items)
+
+    def _build_context_string(self, similar_items: List[Dict[str, Any]]) -> str:
+        """Helper to build context string from similar items"""
         context_parts = []
         if similar_items:
             for i, item in enumerate(similar_items[:3], 1):
@@ -249,12 +267,12 @@ Answer: {item['correct_answer']}
 Explanation: {item['explanation']}
 """)
         
-        context = "\n".join(context_parts) if context_parts else "No specific context available from the database."
-        
-        # Use Ollama or Groq to generate intelligent response
-        try:
-            # Build the prompt
-            system_prompt = """You are an expert AI tutor for Smart Shiksha, a personalized education platform. Your role is to:
+        return "\n".join(context_parts) if context_parts else "No specific context available from the database."
+
+    def _generate_llm_response(self, query: str, context: str) -> Optional[str]:
+        """Helper to generate response using LLM"""
+        # Build the prompt
+        system_prompt = """You are an expert AI tutor for Smart Shiksha, a personalized education platform. Your role is to:
 
 1. Provide clear, accurate, and educational answers
 2. Use the provided context from the knowledge base when relevant
@@ -265,54 +283,51 @@ Explanation: {item['explanation']}
 
 If the context is relevant, use it to inform your answer. If not directly applicable, use your knowledge to provide an educational response."""
 
-            user_prompt = f"""Context from knowledge base:
+        user_prompt = f"""Context from knowledge base:
 {context}
 
 Student's question: {query}
 
 Please provide a comprehensive, educational answer to the student's question. Use the context if it's relevant, but feel free to provide a complete answer using your knowledge."""
 
-            answer = ""
+        if settings.USE_OLLAMA:
+            print(f"DEBUG: Calling Ollama with model {settings.OLLAMA_MODEL}")
+            response = ollama.chat(model=settings.OLLAMA_MODEL, messages=[
+                {'role': 'system', 'content': system_prompt},
+                {'role': 'user', 'content': user_prompt},
+            ])
+            print("DEBUG: Received response from Ollama")
+            return response['message']['content']
             
-            if settings.USE_OLLAMA:
-                print(f"DEBUG: Calling Ollama with model {settings.OLLAMA_MODEL}")
-                response = ollama.chat(model=settings.OLLAMA_MODEL, messages=[
-                    {'role': 'system', 'content': system_prompt},
-                    {'role': 'user', 'content': user_prompt},
-                ])
-                answer = response['message']['content']
-                print("DEBUG: Received response from Ollama")
-                
-            elif self.groq_client:
-                print("DEBUG: Sending request to Groq...")
-                completion = self.groq_client.chat.completions.create(
-                    model=settings.GROQ_MODEL,
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    temperature=0.7,
-                    max_tokens=1024,
-                    top_p=0.9
-                )
-                answer = completion.choices[0].message.content
-                print("DEBUG: Received response from Groq")
-            
-            if answer:
-                return {
-                    "answer": answer,
-                    "is_educational": True,
-                    "sources": similar_items[:3] if similar_items else [],
-                    "subject": similar_items[0]['subject'] if similar_items else "General",
-                    "topic": similar_items[0]['topic'] if similar_items else "General Knowledge"
-                }
-
-        except Exception as e:
-            print(f"ERROR: AI Generation failed: {str(e)}")
-            import traceback
-            traceback.print_exc()
-            pass
+        elif self.groq_client:
+            print("DEBUG: Sending request to Groq...")
+            completion = self.groq_client.chat.completions.create(
+                model=settings.GROQ_MODEL,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.7,
+                max_tokens=1024,
+                top_p=0.9
+            )
+            print("DEBUG: Received response from Groq")
+            return completion.choices[0].message.content
         
+        return None
+
+    def _create_success_response(self, answer: str, similar_items: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Helper to create success response dictionary"""
+        return {
+            "answer": answer,
+            "is_educational": True,
+            "sources": similar_items[:3] if similar_items else [],
+            "subject": similar_items[0]['subject'] if similar_items else "General",
+            "topic": similar_items[0]['topic'] if similar_items else "General Knowledge"
+        }
+
+    def _create_fallback_response(self, similar_items: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Helper to create fallback response when AI fails"""
         # Fallback if AI generation failed (or client not initialized) AND no similar items found
         if not similar_items:
             print("DEBUG: No similar items found and AI failed/missing. Returning fallback.")
