@@ -3,14 +3,14 @@ class User {
   final String username;
   final String email;
   final String language;
-  
+
   User({
     required this.id,
     required this.username,
     required this.email,
     this.language = 'en',
   });
-  
+
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['_id'] ?? json['id'] ?? '',
@@ -19,7 +19,7 @@ class User {
       language: json['language'] ?? 'en',
     );
   }
-  
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

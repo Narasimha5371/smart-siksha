@@ -6,7 +6,7 @@ class Question {
   final String explanation;
   final String subject;
   final String topic;
-  
+
   Question({
     required this.id,
     required this.question,
@@ -16,7 +16,7 @@ class Question {
     required this.subject,
     required this.topic,
   });
-  
+
   factory Question.fromJson(Map<String, dynamic> json) {
     return Question(
       id: json['id'] ?? '',
@@ -28,7 +28,7 @@ class Question {
       topic: json['topic'] ?? '',
     );
   }
-  
+
   String get correctAnswer {
     final keys = options.keys.toList();
     if (correctAnswerIndex < keys.length) {

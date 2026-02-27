@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/chat_screen.dart';
@@ -6,7 +7,8 @@ import 'screens/lessons_screen.dart';
 import 'screens/quiz_screen.dart';
 import 'services/api_service.dart';
 
-void main() {
+Future<void> main() async {
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 
@@ -16,7 +18,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Provider<ApiService>(
-      create: (_) => ApiService(),
+      create: (_) => ApiService(baseUrl: dotenv.env['API_BASE_URL']),
       child: MaterialApp(
         title: 'Smart Shiksha',
         debugShowCheckedModeBanner: false,
