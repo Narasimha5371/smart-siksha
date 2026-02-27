@@ -3,6 +3,7 @@ from app.models.all_models import StudentProgress, User
 from app.schemas.sync import SyncPushRequest
 from datetime import datetime
 from typing import Dict, List, Any
+import uuid
 
 class SyncService:
     def __init__(self, db: Session):
@@ -54,13 +55,34 @@ class SyncService:
                     self.db.add(new_record)
             
             # handle updated
-            for item in progress_changes.get("updated", []):
-                existing = self.db.query(StudentProgress).filter(StudentProgress.id == item['id']).first()
-                if existing:
-                    # Generic update
-                    for key, value in item.items():
-                        if hasattr(existing, key):
-                            setattr(existing, key, value)
-                    existing.updated_at = datetime.utcnow()
+            updated_items = progress_changes.get("updated", [])
+            if updated_items:
+                # Fetch all existing records in one query
+                updated_ids = []
+                for item in updated_items:
+                    try:
+                        uid = item['id']
+                        if isinstance(uid, str):
+                            uid = uuid.UUID(uid)
+                        updated_ids.append(uid)
+                    except ValueError:
+                        continue
+
+                if updated_ids:
+                    existing_records = self.db.query(StudentProgress).filter(StudentProgress.id.in_(updated_ids)).all()
+                    existing_map = {str(record.id): record for record in existing_records}
+                else:
+                    existing_map = {}
+
+                for item in updated_items:
+                    existing = existing_map.get(str(item['id']))
+                    if existing:
+                        # Generic update
+                        for key, value in item.items():
+                            if key == 'id':
+                                continue
+                            if hasattr(existing, key):
+                                setattr(existing, key, value)
+                        existing.updated_at = datetime.utcnow()
 
         self.db.commit()
