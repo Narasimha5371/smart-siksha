@@ -3,8 +3,9 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List
 from uuid import uuid4
 
-from fastapi import FastAPI, HTTPException, UploadFile
+from fastapi import FastAPI, HTTPException, UploadFile, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from pydantic import BaseModel, EmailStr, Field
 
@@ -23,6 +24,26 @@ app.add_middleware(
 JWT_SECRET = os.getenv("JWT_SECRET", "change-me")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "120"))
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
+def get_current_teacher(token: str = Depends(oauth2_scheme)) -> Dict[str, Any]:
+    credentials_exception = HTTPException(
+        status_code=401,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        role: str = payload.get("role")
+        if role is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+
+    if role not in ["teacher", "admin"]:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    return payload
 
 
 def create_access_token(payload: Dict[str, Any]) -> str:
@@ -133,7 +154,7 @@ def quiz_generate(payload: QuizGenerateRequest) -> Dict[str, Any]:
 
 
 @app.post("/teacher/upload-curriculum")
-async def upload_curriculum(file: UploadFile) -> Dict[str, str]:
+async def upload_curriculum(file: UploadFile, token_payload: Dict[str, Any] = Depends(get_current_teacher)) -> Dict[str, str]:
     save_dir = os.getenv("CURRICULUM_UPLOAD_DIR", "backend/data/textbooks")
     os.makedirs(save_dir, exist_ok=True)
     target = os.path.join(save_dir, file.filename)
