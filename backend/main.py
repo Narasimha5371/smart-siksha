@@ -9,6 +9,9 @@ from data_processor import data_processor
 import uvicorn
 import pdfplumber
 import io
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -61,9 +64,9 @@ class QuizResponse(BaseModel):
 @app.on_event("startup")
 async def startup_event():
     """Initialize AI tutor on startup"""
-    print("Starting up Smart Shiksha AI Backend...")
+    logger.info("Starting up Smart Shiksha AI Backend...")
     ai_tutor.initialize()
-    print("Backend ready!")
+    logger.info("Backend ready!")
 
 # Health check endpoint
 @app.get("/")
@@ -126,7 +129,7 @@ async def chat(request: ChatRequest):
         )
         
     except Exception as e:
-        print(f"Chat error: {str(e)}")
+        logger.error(f"Chat error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Translation endpoint
@@ -235,7 +238,7 @@ async def upload_pdf(file: UploadFile = File(...)):
         
         return PDFResponse(text=text, filename=file.filename)
     except Exception as e:
-        print(f"PDF processing error: {e}")
+        logger.error(f"PDF processing error: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to process PDF: {str(e)}")
 
 # Get dataset statistics
